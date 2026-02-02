@@ -6,6 +6,8 @@ const MOCK_USER: User = {
   id: '1',
   email: 'tourist@saferoute.com',
   name: 'John Tourist',
+  role: 'user',
+  status: 'active',
   createdAt: new Date().toISOString(),
 };
 
