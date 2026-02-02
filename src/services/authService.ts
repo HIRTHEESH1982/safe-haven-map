@@ -34,6 +34,18 @@ export const authService = {
     }
   },
 
+  async checkEmailAvailability(email: string): Promise<{ available: boolean; message?: string }> {
+    try {
+      const response = await api.post<{ available: boolean; message?: string }>('/auth/check-email', { email });
+      return response.data;
+    } catch (error) {
+      // Fallback to allowing if the check fails for some reason (e.g. network), 
+      // or rethrow. For UX, maybe better to return available: true but log it.
+      // But let's throw so the UI knows something went wrong.
+      throw error;
+    }
+  },
+
   async verifyOTP(email: string, otp: string): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/auth/verify-otp', { email, otp });
