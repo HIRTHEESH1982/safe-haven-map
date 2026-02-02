@@ -59,10 +59,11 @@ const Login: React.FC = () => {
         password: formData.password,
       });
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Invalid email or password. Please try again.";
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
