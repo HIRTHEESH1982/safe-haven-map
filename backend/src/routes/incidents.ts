@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import Incident from '../models/Incident';
+import User from '../models/User';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
@@ -7,9 +8,7 @@ const router = express.Router();
 // Get all incidents
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const incidents = await Incident.find().sort({ createdAt: -1 });
-        // Transform specifically to flatten _id to id if needed, but frontend likely handles it.
-        // Let's standardise response format
+        const incidents = await Incident.find().select('-votes -__v').sort({ createdAt: -1 });
         res.json({
             success: true, data: incidents.map(inc => ({
                 id: inc._id,
@@ -22,8 +21,7 @@ router.get('/', async (req: Request, res: Response) => {
                 location: inc.location,
                 reportedBy: inc.reportedBy,
                 reportedAt: inc.createdAt,
-                verified: inc.verified,
-                votes: inc.votes
+                status: inc.status
             }))
         });
     } catch (err: any) {
@@ -33,25 +31,32 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Create an incident
+
+// ...
+
+// Create an incident
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     try {
         const { title, description, category, severity, latitude, longitude, location } = req.body;
+
+        // Fetch user to get email
+        const user = await User.findById(req.user?.id);
 
         const newIncident = new Incident({
             title,
             description,
             category,
-            severity: severity || 'medium', // Default severity
+            severity: severity || 'medium',
             latitude,
             longitude,
             location,
             reportedBy: req.user?.id,
-            verified: false
+            reportedByEmail: user?.email || 'unknown',
+            status: 'pending'
         });
 
         const incident = await newIncident.save();
 
-        // Return formatted incident
         res.json({
             success: true, data: {
                 id: incident._id,
@@ -64,8 +69,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
                 location: incident.location,
                 reportedBy: incident.reportedBy,
                 reportedAt: incident.createdAt,
-                verified: incident.verified,
-                votes: incident.votes
+                status: incident.status
             }
         });
     } catch (err: any) {
@@ -90,8 +94,7 @@ router.get('/user/:userId', authMiddleware, async (req: Request, res: Response) 
                 location: inc.location,
                 reportedBy: inc.reportedBy,
                 reportedAt: inc.createdAt,
-                verified: inc.verified,
-                votes: inc.votes
+                status: inc.status
             }))
         });
     } catch (err: any) {

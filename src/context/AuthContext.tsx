@@ -3,9 +3,9 @@ import { User, AuthState, LoginCredentials, RegisterCredentials } from '@/types'
 import { authService } from '@/services/authService';
 
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   register: (credentials: RegisterCredentials) => Promise<void>;
-  verifyOTP: (email: string, otp: string) => Promise<void>;
+  verifyOTP: (email: string, otp: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -46,6 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: true,
         isLoading: false,
       });
+      return response.user; // Return user for redirection logic
     } catch (error) {
       throw error;
     }
@@ -70,6 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: true,
         isLoading: false,
       });
+      return response.user; // Return user for redirection logic
     } catch (error) {
       throw error;
     }

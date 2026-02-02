@@ -5,6 +5,7 @@ export interface IUser extends Document {
     email: string;
     password?: string;
     role: 'user' | 'admin';
+    status?: 'active' | 'suspended';
     isVerified: boolean;
     otp?: string;
     otpExpires?: Date;
@@ -16,6 +17,7 @@ const UserSchema: Schema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    status: { type: String, enum: ['active', 'suspended'], default: 'active' },
     isVerified: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires: { type: Date },

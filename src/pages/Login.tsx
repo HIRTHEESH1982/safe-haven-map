@@ -18,6 +18,7 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    role: 'user', // Default role
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,11 +55,17 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login({
+      const user = await login({
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
-      navigate(from, { replace: true });
+
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -125,6 +132,34 @@ const Login: React.FC = () => {
               </div>
             </div>
 
+
+            <div className="space-y-2">
+              <Label htmlFor="role">I am a...</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={formData.role === 'user'}
+                    onChange={handleInputChange}
+                    className="accent-primary"
+                  />
+                  <span className="font-medium">Tourist / Local</span>
+                </label>
+                <label className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={formData.role === 'admin'}
+                    onChange={handleInputChange}
+                    className="accent-primary"
+                  />
+                  <span className="font-medium">Administrator</span>
+                </label>
+              </div>
+            </div>
 
             <Button type="submit" className="w-full gap-2" disabled={isLoading}>
               <LogIn className="h-4 w-4" />

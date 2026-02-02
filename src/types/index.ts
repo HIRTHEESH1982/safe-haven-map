@@ -1,8 +1,9 @@
-// User types
 export interface User {
   id: string;
   email: string;
   name: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'suspended';
   createdAt: string;
 }
 
@@ -16,12 +17,14 @@ export interface AuthState {
 export interface LoginCredentials {
   email: string;
   password: string;
+  role?: string;
 }
 
 export interface RegisterCredentials {
   email: string;
   password: string;
   name: string;
+  role?: string;
 }
 
 // Incident types
@@ -35,6 +38,7 @@ export type IncidentCategory =
   | 'other';
 
 export type IncidentSeverity = 'low' | 'medium' | 'high';
+export type IncidentStatus = 'pending' | 'verified' | 'rejected';
 
 export interface Incident {
   id: string;
@@ -45,9 +49,12 @@ export interface Incident {
   latitude: number;
   longitude: number;
   location: string;
-  reportedBy: string;
+  reportedBy: any; // Updated to handle populated object
   reportedAt: string;
-  verified: boolean;
+  status: 'pending' | 'verified' | 'rejected';
+  createdAt?: string;
+  moderationReason?: string;
+  verified?: boolean; // Backward compatibility (optional)
 }
 
 export interface CreateIncidentPayload {

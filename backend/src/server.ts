@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import incidentRoutes from './routes/incidents';
 import proxyRoutes from './routes/proxy';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/proxy', proxyRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

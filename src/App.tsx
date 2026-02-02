@@ -14,6 +14,10 @@ import Report from "@/pages/Report";
 import Profile from "@/pages/Profile";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import UserManagement from "@/pages/admin/UserManagement";
+import IncidentManagement from "@/pages/admin/IncidentManagement";
+import PrivateAdminRoute from "@/components/auth/PrivateAdminRoute";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +66,32 @@ const App = () => (
                 <PrivateRoute>
                   <Profile />
                 </PrivateRoute>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <PrivateAdminRoute>
+                  <AdminDashboard />
+                </PrivateAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <PrivateAdminRoute>
+                  <UserManagement />
+                </PrivateAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/incidents"
+              element={
+                <PrivateAdminRoute>
+                  <IncidentManagement />
+                </PrivateAdminRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

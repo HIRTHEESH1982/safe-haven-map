@@ -50,7 +50,6 @@ interface MapViewProps {
   routeCoordinates?: [number, number][];
 }
 
-// Component to handle map clicks
 const MapClickHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
   const map = useMap();
 
@@ -68,6 +67,41 @@ const MapClickHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void
   return null;
 };
 
+// Component to handle map resize issues more robustly
+const MapResizer = () => {
+  const map = useMap();
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    // Observe the map container's parent
+    if (map.getContainer().parentElement) {
+      resizeObserver.observe(map.getContainer().parentElement!);
+    }
+
+    // Also trigger once on mount after a delay
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+    return () => resizeObserver.disconnect();
+  }, [map]);
+  return null;
+};
+
+// Component to handle map center updates
+const MapUpdater: React.FC<{ center: { lat: number; lng: number }, zoom: number }> = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([center.lat, center.lng], zoom, {
+      duration: 1.5,
+      easeLinearity: 0.25
+    });
+  }, [center, zoom, map]);
+  return null;
+};
+
 const MapView: React.FC<MapViewProps> = ({
   incidents,
   center = CHICAGO_CENTER,
@@ -77,6 +111,12 @@ const MapView: React.FC<MapViewProps> = ({
   onMapClick,
   routeCoordinates,
 }) => {
+  // Filter out invalid incidents (ensure numbers are finite)
+  const validIncidents = incidents.filter(
+    i => typeof i.latitude === 'number' && !isNaN(i.latitude) &&
+      typeof i.longitude === 'number' && !isNaN(i.longitude)
+  );
+
   return (
     <MapContainer
       center={[center.lat, center.lng]}
@@ -88,6 +128,8 @@ const MapView: React.FC<MapViewProps> = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <MapResizer />
+      <MapUpdater center={center} zoom={zoom} />
 
       {clickableMap && onMapClick && <MapClickHandler onMapClick={onMapClick} />}
 
@@ -100,7 +142,7 @@ const MapView: React.FC<MapViewProps> = ({
         />
       )}
 
-      {incidents.map((incident) => (
+      {validIncidents.map((incident) => (
         <Marker
           key={incident.id}
           position={[incident.latitude, incident.longitude]}
@@ -130,7 +172,13 @@ const MapView: React.FC<MapViewProps> = ({
                 📍 {incident.location}
               </p>
               <p className="text-xs text-muted-foreground">
-                🕐 {formatDistanceToNow(new Date(incident.reportedAt), { addSuffix: true })}
+                🕐 {(() => {
+                  try {
+                    return incident.reportedAt ? formatDistanceToNow(new Date(incident.reportedAt), { addSuffix: true }) : 'Unknown time';
+                  } catch (e) {
+                    return 'Time unavailable';
+                  }
+                })()}
               </p>
             </div>
           </Popup>

@@ -11,7 +11,7 @@ import { sendOTP } from '../utils/email';
 // Register
 router.post('/register', async (req: Request, res: Response) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
 
         // Check if user exists
         let user = await User.findOne({ email });
@@ -47,6 +47,7 @@ router.post('/register', async (req: Request, res: Response) => {
             name,
             email,
             password: hashedPassword,
+            role: role || 'user', // Default to user if not provided
             otp,
             otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 mins
             isVerified: false
@@ -109,7 +110,7 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
             { expiresIn: '7d' },
             (err, token) => {
                 if (err) throw err;
-                res.json({ token, user: { id: user?.id, name: user?.name, email: user?.email } });
+                res.json({ token, user: { id: user?.id, name: user?.name, email: user?.email, role: user?.role } });
             }
         );
 
@@ -136,6 +137,14 @@ router.post('/login', async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
+        // Verify role if provided
+        // Use logic: If user selects 'admin' but is 'user' in DB -> Deny
+        // If user selects 'user' but is 'admin' in DB -> Allow (Admins can login as users) - OR prevent to avoid confusion.
+        // Let's enforce strict matching or at least Deny unauthorized admin access.
+        if (req.body.role && user.role !== req.body.role) {
+            return res.status(403).json({ message: `Access denied. You are not an ${req.body.role}.` });
+        }
+
         // Create token
         const payload = {
             user: {
@@ -149,7 +158,7 @@ router.post('/login', async (req: Request, res: Response) => {
             { expiresIn: '7d' },
             (err, token) => {
                 if (err) throw err;
-                res.json({ token, user: { id: user?.id, name: user?.name, email: user?.email } });
+                res.json({ token, user: { id: user?.id, name: user?.name, email: user?.email, role: user?.role } });
             }
         );
     } catch (err: any) {
@@ -162,7 +171,8 @@ router.post('/login', async (req: Request, res: Response) => {
 router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     try {
         const user = await User.findById(req.user?.id).select('-password');
-        res.json(user);
+
+        res.json(user); // Mongoose object already contains role if selected (default)
     } catch (err: any) {
         console.error(err.message);
         res.status(500).send('Server Error');

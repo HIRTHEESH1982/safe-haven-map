@@ -22,6 +22,7 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'user', // Default role
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +80,7 @@ const Register: React.FC = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
       // Move to OTP step
       setStep('otp');
@@ -103,8 +105,13 @@ const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await verifyOTP(formData.email, otp);
-      navigate('/');
+      const user = await verifyOTP(formData.email, otp);
+
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       toast({ title: "Verification Failed", description: "Invalid or expired OTP.", variant: "destructive" });
     } finally {
@@ -146,6 +153,8 @@ const Register: React.FC = () => {
                 // className={errors.name ? 'border-destructive' : ''}
                 />
               </div>
+
+              {/* Role Selection Removed - defaults to 'user' */}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
