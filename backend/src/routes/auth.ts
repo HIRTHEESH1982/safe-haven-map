@@ -3,10 +3,45 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
+import validateEmail from 'deep-email-validator';
 
 const router = express.Router();
 
 import { sendOTP } from '../utils/email';
+
+// Check Email Availability
+router.post('/check-email', async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+
+        // 1. Check DB for verified user
+        const user = await User.findOne({ email });
+        if (user && user.isVerified) {
+            return res.json({ available: false, message: 'Email already registered' });
+        }
+
+        // 2. Deep Email Validation (SMTP check)
+        // Skip validation for test accounts or specific domains if needed to speed up dev
+        // but for now we run it.
+        const resVal = await validateEmail(email);
+
+        if (!resVal.valid) {
+            let reason = 'Invalid email address';
+            if (resVal.reason === 'disposable') reason = 'Disposable emails are not allowed';
+            if (resVal.reason === 'mx') reason = 'Invalid email domain (No MX records)';
+            if (resVal.reason === 'smtp') reason = 'Email address does not exist';
+
+            return res.json({ available: false, message: reason });
+        }
+
+        res.json({ available: true });
+    } catch (err: any) {
+        console.error(err.message);
+        // Fail open if validation errors out? Or closed?
+        // Let's return error so they can retry.
+        res.status(500).json({ message: 'Error checking email' });
+    }
+});
 
 // Register
 router.post('/register', async (req: Request, res: Response) => {
@@ -128,13 +163,13 @@ router.post('/login', async (req: Request, res: Response) => {
         // Check if user exists
         let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'Email not found' });
         }
 
         // Check password
         const isMatch = await bcrypt.compare(password, user.password as string);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'Incorrect password' });
         }
 
         // Verify role if provided

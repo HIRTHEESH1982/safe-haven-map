@@ -18,7 +18,6 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'user', // Default role
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +57,6 @@ const Login: React.FC = () => {
       const user = await login({
         email: formData.email,
         password: formData.password,
-        role: formData.role,
       });
 
       if (user.role === 'admin') {
@@ -66,10 +64,11 @@ const Login: React.FC = () => {
       } else {
         navigate(from, { replace: true });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Invalid email or password. Please try again.";
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -132,56 +131,25 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-
-            <div className="space-y-2">
-              <Label htmlFor="role">I am a...</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="user"
-                    checked={formData.role === 'user'}
-                    onChange={handleInputChange}
-                    className="accent-primary"
-                  />
-                  <span className="font-medium">Tourist / Local</span>
-                </label>
-                <label className="flex items-center gap-2 border rounded-md p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="admin"
-                    checked={formData.role === 'admin'}
-                    onChange={handleInputChange}
-                    className="accent-primary"
-                  />
-                  <span className="font-medium">Administrator</span>
-                </label>
-              </div>
-            </div>
-
             <Button type="submit" className="w-full gap-2" disabled={isLoading}>
               <LogIn className="h-4 w-4" />
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+          <span className="text-muted-foreground">Don't have an account? </span>
+          <Link to="/register" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>
+        </div>
 
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
-            <Link to="/register" className="font-medium text-primary hover:underline">
-              Create one
-            </Link>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back to Home
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+            ← Back to Home
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+    </div >
   );
 };
 

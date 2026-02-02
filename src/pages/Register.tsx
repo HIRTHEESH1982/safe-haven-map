@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, UserPlus, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, UserPlus, Eye, EyeOff, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register, verifyOTP } = useAuth();
+  const { register, verifyOTP, checkEmailAvailability } = useAuth();
   const { toast } = useToast();
 
   const [step, setStep] = useState<'form' | 'otp'>('form');
@@ -26,10 +26,43 @@ const Register: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'available' | 'taken' | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  const [emailMessage, setEmailMessage] = useState<string>('');
+
+  const checkEmail = async (email: string) => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+
+    setIsCheckingEmail(true);
+    setEmailMessage('');
+    try {
+      const result = await checkEmailAvailability(email);
+      if (result.available) {
+        setEmailStatus('available');
+        setEmailMessage('Email is available');
+        // Optional: toast success
+        // toast({ title: "Email Available", description: "This email is available.", className: "text-green-600" });
+      } else {
+        setEmailStatus('taken');
+        const message = result.message || 'Email is not available';
+        setEmailMessage(message);
+        toast({ title: "Invalid Email", description: message, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Failed to check email', error);
+      setEmailStatus(null);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'email') {
+      setEmailStatus(null);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -49,8 +82,11 @@ const Register: React.FC = () => {
     if (!formData.password) {
       toast({ title: "Password Required", description: "Please enter a password.", variant: "destructive" });
       return false;
-    } else if (formData.password.length < 6) {
-      toast({ title: "Weak Password", description: "Password must be at least 6 characters.", variant: "destructive" });
+    } else if (formData.password.length < 8) {
+      toast({ title: "Weak Password", description: "Password must be at least 8 characters.", variant: "destructive" });
+      return false;
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      toast({ title: "Weak Password", description: "Password must contain at least one special character.", variant: "destructive" });
       return false;
     }
 
@@ -63,15 +99,22 @@ const Register: React.FC = () => {
   };
 
   const passwordChecks = [
-    { check: formData.password.length >= 6, label: 'At least 6 characters' },
+    { check: formData.password.length >= 8, label: 'At least 8 characters' },
     { check: /[A-Z]/.test(formData.password), label: 'One uppercase letter' },
     { check: /[0-9]/.test(formData.password), label: 'One number' },
+    { check: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password), label: 'One special character' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    if (emailStatus === 'taken') {
+      // Display the specific message if possible, but toast just says "Invalid"
+      toast({ title: "Invalid Email", description: emailMessage || "This email is invalid or already registered.", variant: "destructive" });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -158,15 +201,28 @@ const Register: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="tourist@example.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                // className={errors.email ? 'border-destructive' : ''}
-                />
+                <div className="relative">
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="tourist@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onBlur={() => checkEmail(formData.email)}
+                    className={emailStatus === 'taken' ? 'border-destructive pr-10' : emailStatus === 'available' ? 'border-success pr-10' : 'pr-10'}
+                  />
+                  <div className="absolute right-3 top-2.5">
+                    {isCheckingEmail ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : emailStatus === 'available' ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : emailStatus === 'taken' ? (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    ) : null}
+                  </div>
+                </div>
+                {isCheckingEmail && <p className="text-xs text-muted-foreground">Checking...</p>}
               </div>
 
               <div className="space-y-2">
@@ -260,7 +316,7 @@ const Register: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 };
 
