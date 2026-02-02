@@ -136,19 +136,20 @@ const Login: React.FC = () => {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <span className="text-muted-foreground">Don't have an account? </span>
-          <Link to="/register" className="font-medium text-primary hover:underline">
-            Create one
-          </Link>
-        </div>
+          <div className="mt-6 text-center text-sm">
+            <span className="text-muted-foreground">Don't have an account? </span>
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Create one
+            </Link>
+          </div>
 
-        <div className="mt-4 text-center">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Back to Home
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Home
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div >
   );
 };

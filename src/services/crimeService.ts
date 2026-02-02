@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Incident } from '@/types';
 
-const BASE_URL = import.meta.env.VITE_CHICAGO_CRIME_API_URL;
+const BASE_URL = import.meta.env.VITE_CHICAGO_CRIME_API_URL || 'https://data.cityofchicago.org/resource/ijzp-q8t2.json';
 
 interface CrimeRecord {
     id: string;

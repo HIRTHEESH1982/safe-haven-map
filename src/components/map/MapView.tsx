@@ -67,6 +67,7 @@ interface MapViewProps {
   routeType?: 'direct' | 'optimized';
   avoidPolygons?: any;
   crimeData?: any[];
+  showOnlyHighSeverity?: boolean;
 }
 
 const MapClickHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
@@ -142,28 +143,37 @@ function RouteWithArrows({ coordinates }: { coordinates: [number, number][] }) {
       dashArray: '10, 10',
     }).addTo(map);
 
-    // Add arrows
-    const decorator = (L as any).polylineDecorator(polyline, {
-      patterns: [
-        {
-          offset: 25,
-          repeat: 50,
-          symbol: (L as any).Symbol ? (L as any).Symbol.arrowHead({
-            pixelSize: 15,
-            polygon: false,
-            pathOptions: { stroke: true, color: '#2563eb', weight: 2 }
-          }) : null
-        }
-      ]
-    }).addTo(map);
+    // Add arrows (safely)
+    let decorator: any;
+    if ((L as any).polylineDecorator) {
+      try {
+        decorator = (L as any).polylineDecorator(polyline, {
+          patterns: [
+            {
+              offset: 25,
+              repeat: 50,
+              symbol: (L as any).Symbol ? (L as any).Symbol.arrowHead({
+                pixelSize: 15,
+                polygon: false,
+                pathOptions: { stroke: true, color: '#2563eb', weight: 2 }
+              }) : null
+            }
+          ]
+        }).addTo(map);
+        (decorator as any)._isRouteArrow = true;
+      } catch (e) {
+        console.warn('Failed to add route arrows:', e);
+      }
+    }
 
     // Mark as custom for cleanup
     (polyline as any)._isRouteArrow = true;
-    (decorator as any)._isRouteArrow = true;
 
     return () => {
       map.removeLayer(polyline);
-      map.removeLayer(decorator);
+      if (decorator) {
+        map.removeLayer(decorator);
+      }
     };
   }, [coordinates, map]);
 
@@ -184,11 +194,13 @@ const MapView: React.FC<MapViewProps> = ({
   routeType,
   avoidPolygons,
   crimeData = [],
+  showOnlyHighSeverity = false,
 }) => {
-  // Filter out invalid incidents (ensure numbers are finite)
+  // Filter out invalid incidents (ensure numbers are finite) and apply severity filter
   const validIncidents = incidents.filter(
     i => typeof i.latitude === 'number' && !isNaN(i.latitude) &&
-      typeof i.longitude === 'number' && !isNaN(i.longitude)
+      typeof i.longitude === 'number' && !isNaN(i.longitude) &&
+      (showOnlyHighSeverity ? i.severity === 'high' : true)
   );
 
   return (

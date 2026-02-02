@@ -245,6 +245,7 @@ const MapPage: React.FC = () => {
               route={route}
               routeType={routeType}
               avoidPolygons={avoidPolygons}
+              showOnlyHighSeverity={true}
             />
           )}
         </div>
