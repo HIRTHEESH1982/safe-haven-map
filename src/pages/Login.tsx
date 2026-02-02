@@ -9,12 +9,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
 
+  const [role, setRole] = useState<'user' | 'admin'>('user');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -57,6 +60,7 @@ const Login: React.FC = () => {
       const user = await login({
         email: formData.email,
         password: formData.password,
+        role: role,
       });
 
       if (user.role === 'admin') {
@@ -89,53 +93,110 @@ const Login: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="tourist@example.com"
-                value={formData.email}
-                onChange={handleInputChange}
-              // className={errors.email ? 'border-destructive' : ''}
-              />
-            </div>
+          <Tabs defaultValue="user" className="w-full" onValueChange={(value) => setRole(value as 'user' | 'admin')}>
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="user">User</TabsTrigger>
+              <TabsTrigger value="admin">Administrator</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className='pr-10'
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
+            <TabsContent value="user">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="tourist@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className='pr-10'
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+                  <LogIn className="h-4 w-4" />
+                  {isLoading ? 'Signing in...' : 'Sign In as User'}
                 </Button>
-              </div>
-            </div>
+              </form>
+            </TabsContent>
 
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
-              <LogIn className="h-4 w-4" />
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+            <TabsContent value="admin">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Admin Email</Label>
+                  <Input
+                    id="admin-email"
+                    name="email"
+                    type="email"
+                    placeholder="admin@saferoute.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Admin Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="admin-password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className='pr-10'
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+                  <LogIn className="h-4 w-4" />
+                  {isLoading ? 'Signing in...' : 'Sign In as Administrator'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link to="/register" className="font-medium text-primary hover:underline">
