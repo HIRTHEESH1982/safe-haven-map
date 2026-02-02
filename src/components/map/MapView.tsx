@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { CHICAGO_CENTER, Incident, IncidentSeverity } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -47,6 +47,7 @@ interface MapViewProps {
   onMarkerClick?: (incident: Incident) => void;
   clickableMap?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
+  routeCoordinates?: [number, number][];
 }
 
 // Component to handle map clicks
@@ -74,6 +75,7 @@ const MapView: React.FC<MapViewProps> = ({
   onMarkerClick,
   clickableMap = false,
   onMapClick,
+  routeCoordinates,
 }) => {
   return (
     <MapContainer
@@ -88,6 +90,15 @@ const MapView: React.FC<MapViewProps> = ({
       />
 
       {clickableMap && onMapClick && <MapClickHandler onMapClick={onMapClick} />}
+
+      {routeCoordinates && (
+        <Polyline
+          positions={routeCoordinates}
+          color="blue"
+          weight={4}
+          opacity={0.7}
+        />
+      )}
 
       {incidents.map((incident) => (
         <Marker
@@ -107,8 +118,8 @@ const MapView: React.FC<MapViewProps> = ({
                     incident.severity === 'high'
                       ? 'bg-destructive text-destructive-foreground'
                       : incident.severity === 'medium'
-                      ? 'bg-warning text-warning-foreground'
-                      : 'bg-success text-success-foreground'
+                        ? 'bg-warning text-warning-foreground'
+                        : 'bg-success text-success-foreground'
                   }
                 >
                   {incident.severity}

@@ -1,5 +1,5 @@
 import api from './api';
-import { LoginCredentials, RegisterCredentials, AuthResponse, User } from '@/types';
+import { LoginCredentials, RegisterCredentials, AuthResponse, RegisterResponse, User } from '@/types';
 
 // Mock user for development
 const MOCK_USER: User = {
@@ -21,40 +21,25 @@ export const authService = {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
       return response.data;
     } catch (error) {
-      // Fall back to mock data for development
-      console.log('Using mock authentication');
-      await delay(500);
-      
-      if (credentials.email && credentials.password) {
-        return {
-          user: { ...MOCK_USER, email: credentials.email },
-          token: MOCK_TOKEN,
-        };
-      }
-      throw new Error('Invalid credentials');
+      throw error;
     }
   },
 
-  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+  async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
-      const response = await api.post<AuthResponse>('/auth/register', credentials);
+      const response = await api.post<RegisterResponse>('/auth/register', credentials);
       return response.data;
     } catch (error) {
-      // Fall back to mock data for development
-      console.log('Using mock registration');
-      await delay(500);
-      
-      if (credentials.email && credentials.password && credentials.name) {
-        return {
-          user: {
-            ...MOCK_USER,
-            email: credentials.email,
-            name: credentials.name,
-          },
-          token: MOCK_TOKEN,
-        };
-      }
-      throw new Error('Invalid registration data');
+      throw error;
+    }
+  },
+
+  async verifyOTP(email: string, otp: string): Promise<AuthResponse> {
+    try {
+      const response = await api.post<AuthResponse>('/auth/verify-otp', { email, otp });
+      return response.data;
+    } catch (error) {
+      throw error;
     }
   },
 

@@ -91,9 +91,8 @@ export const incidentService = {
       const response = await api.get<ApiResponse<Incident[]>>('/incidents');
       return response.data.data;
     } catch (error) {
-      console.log('Using mock incidents data');
-      await delay(300);
-      return MOCK_INCIDENTS;
+      console.error('Error fetching incidents:', error);
+      return [];
     }
   },
 
@@ -102,21 +101,8 @@ export const incidentService = {
       const response = await api.post<ApiResponse<Incident>>('/incidents', payload);
       return response.data.data;
     } catch (error) {
-      console.log('Using mock incident creation');
-      await delay(500);
-      
-      const newIncident: Incident = {
-        id: String(Date.now()),
-        ...payload,
-        severity: 'medium',
-        reportedBy: 'current-user',
-        reportedAt: new Date().toISOString(),
-        verified: false,
-      };
-      
-      // Add to mock data
-      MOCK_INCIDENTS.unshift(newIncident);
-      return newIncident;
+      console.error('Error creating incident:', error);
+      throw error;
     }
   },
 
@@ -125,9 +111,8 @@ export const incidentService = {
       const response = await api.get<ApiResponse<Incident[]>>(`/incidents/user/${userId}`);
       return response.data.data;
     } catch (error) {
-      console.log('Using mock user incidents');
-      await delay(300);
-      return MOCK_INCIDENTS.filter(incident => incident.reportedBy === userId);
+      console.error('Error fetching user incidents:', error);
+      return [];
     }
   },
 };

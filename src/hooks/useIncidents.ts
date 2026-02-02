@@ -1,12 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { incidentService } from '@/services/incidentService';
+import { crimeService } from '@/services/crimeService'; // Import the new service
 import { CreateIncidentPayload } from '@/types';
 
 export const useIncidents = () => {
   return useQuery({
     queryKey: ['incidents'],
-    queryFn: incidentService.getIncidents,
-    staleTime: 30000, // 30 seconds
+    queryFn: async () => {
+      // Combine mock/user incidents with real crime data
+      const userIncidents = await incidentService.getIncidents();
+      const realCrimes = await crimeService.getRecentCrimes();
+      return [...userIncidents, ...realCrimes];
+    },
+    staleTime: 60000 * 5, // 5 minutes because external API
   });
 };
 

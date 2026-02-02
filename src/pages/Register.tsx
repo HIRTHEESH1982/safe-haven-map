@@ -10,7 +10,10 @@ import { useAuth } from '@/context/AuthContext';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, verifyOTP } = useAuth();
+
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [otp, setOtp] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,6 +60,12 @@ const Register: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const passwordChecks = [
+    { check: formData.password.length >= 6, label: 'At least 6 characters' },
+    { check: /[A-Z]/.test(formData.password), label: 'One uppercase letter' },
+    { check: /[0-9]/.test(formData.password), label: 'One number' },
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -71,19 +80,40 @@ const Register: React.FC = () => {
         email: formData.email,
         password: formData.password,
       });
-      navigate('/');
-    } catch (error) {
-      setErrors({ submit: 'Registration failed. Please try again.' });
+      // Move to OTP step
+      setStep('otp');
+    } catch (error: any) {
+      // Check if message says "User already exists"
+      if (error.response?.data?.message === 'User already exists') {
+        setErrors({ submit: 'User already exists with this email.' });
+      } else {
+        setErrors({ submit: 'Registration failed. Please try again.' });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const passwordChecks = [
-    { check: formData.password.length >= 6, label: 'At least 6 characters' },
-    { check: /[A-Z]/.test(formData.password), label: 'One uppercase letter' },
-    { check: /[0-9]/.test(formData.password), label: 'One number' },
-  ];
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) {
+      setErrors({ otp: 'Please enter a valid 6-digit OTP' });
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+    try {
+      await verifyOTP(formData.email, otp);
+      navigate('/');
+    } catch (error) {
+      setErrors({ otp: 'Invalid or expired OTP.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -92,129 +122,142 @@ const Register: React.FC = () => {
           <Link to="/" className="mb-4 inline-flex items-center justify-center gap-2">
             <Shield className="h-10 w-10 text-primary" />
           </Link>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
+          <CardTitle className="text-2xl">
+            {step === 'form' ? 'Create Account' : 'Verify Email'}
+          </CardTitle>
           <CardDescription>
-            Join SafeRoute Chicago and help keep tourists safe
+            {step === 'form'
+              ? 'Join SafeRoute Chicago and help keep tourists safe'
+              : `We sent a code to ${formData.email}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="John Doe"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={errors.name ? 'border-destructive' : ''}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="tourist@example.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={errors.email ? 'border-destructive' : ''}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+          {step === 'form' ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Existing Form Fields */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
                 <Input
-                  id="password"
-                  name="password"
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className={errors.name ? 'border-destructive' : ''}
+                />
+                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="tourist@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={errors.email ? 'border-destructive' : ''}
+                />
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {/* Password Checks */}
+                {formData.password && (
+                  <div className="mt-2 space-y-1">
+                    {passwordChecks.map(({ check, label }) => (
+                      <div key={label} className="flex items-center gap-2 text-xs">
+                        <CheckCircle className={`h-3 w-3 ${check ? 'text-success' : 'text-muted-foreground'}`} />
+                        <span className={check ? 'text-success' : 'text-muted-foreground'}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={formData.password}
+                  value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                  className={errors.confirmPassword ? 'border-destructive' : ''}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
+                {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+              </div>
+
+              {errors.submit && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errors.submit}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+                <UserPlus className="h-4 w-4" />
+                {isLoading ? 'Sending Code...' : 'Create Account'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Enter Verification Code</Label>
+                <Input
+                  id="otp"
+                  name="otp"
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className={errors.otp ? 'border-destructive text-center text-2xl tracking-widest' : 'text-center text-2xl tracking-widest'}
+                  maxLength={6}
+                />
+                {errors.otp && <p className="text-sm text-destructive text-center">{errors.otp}</p>}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Verifying...' : 'Verify Email'}
+              </Button>
+
+              <div className="mt-4 text-center">
+                <Button variant="link" type="button" onClick={() => setStep('form')} className="text-sm text-muted-foreground">
+                  ← Back to Details
                 </Button>
               </div>
-              {formData.password && (
-                <div className="mt-2 space-y-1">
-                  {passwordChecks.map(({ check, label }) => (
-                    <div key={label} className="flex items-center gap-2 text-xs">
-                      <CheckCircle
-                        className={`h-3 w-3 ${check ? 'text-success' : 'text-muted-foreground'}`}
-                      />
-                      <span className={check ? 'text-success' : 'text-muted-foreground'}>
-                        {label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className={errors.confirmPassword ? 'border-destructive' : ''}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {errors.submit && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errors.submit}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
-              <UserPlus className="h-4 w-4" />
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </form>
+            </form>
+          )}
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
             <Link to="/login" className="font-medium text-primary hover:underline">
               Sign in
-            </Link>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back to Home
             </Link>
           </div>
         </CardContent>
