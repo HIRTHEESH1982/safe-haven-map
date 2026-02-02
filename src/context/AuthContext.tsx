@@ -6,6 +6,7 @@ interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   verifyOTP: (email: string, otp: string) => Promise<void>;
+  checkEmailAvailability: (email: string) => Promise<{ available: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -60,6 +61,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const checkEmailAvailability = async (email: string) => {
+    return authService.checkEmailAvailability(email);
+  };
+
   const verifyOTP = async (email: string, otp: string) => {
     try {
       const response = await authService.verifyOTP(email, otp);
@@ -91,6 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...state,
         login,
         register,
+        checkEmailAvailability,
         verifyOTP,
         logout,
       }}
