@@ -1,0 +1,226 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Shield, UserPlus, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/context/AuthContext';
+
+const Register: React.FC = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      navigate('/');
+    } catch (error) {
+      setErrors({ submit: 'Registration failed. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const passwordChecks = [
+    { check: formData.password.length >= 6, label: 'At least 6 characters' },
+    { check: /[A-Z]/.test(formData.password), label: 'One uppercase letter' },
+    { check: /[0-9]/.test(formData.password), label: 'One number' },
+  ];
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <Link to="/" className="mb-4 inline-flex items-center justify-center gap-2">
+            <Shield className="h-10 w-10 text-primary" />
+          </Link>
+          <CardTitle className="text-2xl">Create Account</CardTitle>
+          <CardDescription>
+            Join SafeRoute Chicago and help keep tourists safe
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={errors.name ? 'border-destructive' : ''}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="tourist@example.com"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={errors.email ? 'border-destructive' : ''}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              {formData.password && (
+                <div className="mt-2 space-y-1">
+                  {passwordChecks.map(({ check, label }) => (
+                    <div key={label} className="flex items-center gap-2 text-xs">
+                      <CheckCircle
+                        className={`h-3 w-3 ${check ? 'text-success' : 'text-muted-foreground'}`}
+                      />
+                      <span className={check ? 'text-success' : 'text-muted-foreground'}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className={errors.confirmPassword ? 'border-destructive' : ''}
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+              )}
+            </div>
+
+            {errors.submit && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{errors.submit}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+              <UserPlus className="h-4 w-4" />
+              {isLoading ? 'Creating account...' : 'Create Account'}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link to="/login" className="font-medium text-primary hover:underline">
+              Sign in
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Home
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Register;
