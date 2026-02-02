@@ -24,6 +24,7 @@ const BottomNav: React.FC = () => {
           <Link
             key={to}
             to={to}
+            state={{ fromUi: true }}
             className={cn(
               'flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
               isActive(to)

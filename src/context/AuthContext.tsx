@@ -5,6 +5,7 @@ import { authService } from '@/services/authService';
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
+  verifyOTP: (email: string, otp: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,7 +53,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (credentials: RegisterCredentials) => {
     try {
-      const response = await authService.register(credentials);
+      await authService.register(credentials);
+      // Do not set state here, wait for OTP verification
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyOTP = async (email: string, otp: string) => {
+    try {
+      const response = await authService.verifyOTP(email, otp);
       authService.setStoredAuth(response.user, response.token);
       setState({
         user: response.user,
@@ -81,6 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...state,
         login,
         register,
+        verifyOTP,
         logout,
       }}
     >

@@ -35,6 +35,7 @@ const Header: React.FC = () => {
             <Link
               key={to}
               to={to}
+              state={{ fromUi: true }}
               className={cn(
                 'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary',
                 isActive(to) ? 'text-primary' : 'text-muted-foreground'
@@ -52,6 +53,7 @@ const Header: React.FC = () => {
             <>
               <Link
                 to="/profile"
+                state={{ fromUi: true }}
                 className={cn(
                   'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary',
                   isActive('/profile') ? 'text-primary' : 'text-muted-foreground'
@@ -98,6 +100,7 @@ const Header: React.FC = () => {
               <Link
                 key={to}
                 to={to}
+                state={{ fromUi: true }}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -114,6 +117,7 @@ const Header: React.FC = () => {
               <>
                 <Link
                   to="/profile"
+                  state={{ fromUi: true }}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',

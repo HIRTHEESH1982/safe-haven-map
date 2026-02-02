@@ -25,7 +25,7 @@ export interface RegisterCredentials {
 }
 
 // Incident types
-export type IncidentCategory = 
+export type IncidentCategory =
   | 'theft'
   | 'assault'
   | 'vandalism'
@@ -69,6 +69,11 @@ export interface ApiResponse<T> {
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  email: string;
 }
 
 // Map types

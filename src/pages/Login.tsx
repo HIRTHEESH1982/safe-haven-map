@@ -7,18 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const from = (location.state as any)?.from?.pathname || '/';
@@ -26,26 +27,23 @@ const Login: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      toast({ title: "Email Required", description: "Please enter your email address.", variant: "destructive" });
+      return false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      toast({ title: "Invalid Email", description: "Please enter a valid email format.", variant: "destructive" });
+      return false;
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      toast({ title: "Password Required", description: "Please enter your password.", variant: "destructive" });
+      return false;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +52,6 @@ const Login: React.FC = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setErrors({});
 
     try {
       await login({
@@ -63,7 +60,11 @@ const Login: React.FC = () => {
       });
       navigate(from, { replace: true });
     } catch (error) {
-      setErrors({ submit: 'Invalid email or password. Please try again.' });
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -92,11 +93,8 @@ const Login: React.FC = () => {
                 placeholder="tourist@example.com"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={errors.email ? 'border-destructive' : ''}
+              // className={errors.email ? 'border-destructive' : ''}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -109,7 +107,7 @@ const Login: React.FC = () => {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                  className='pr-10'
                 />
                 <Button
                   type="button"
@@ -125,17 +123,8 @@ const Login: React.FC = () => {
                   )}
                 </Button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
             </div>
 
-            {errors.submit && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errors.submit}</AlertDescription>
-              </Alert>
-            )}
 
             <Button type="submit" className="w-full gap-2" disabled={isLoading}>
               <LogIn className="h-4 w-4" />

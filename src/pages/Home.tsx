@@ -11,7 +11,6 @@ import { useIncidents } from '@/hooks/useIncidents';
 const Home: React.FC = () => {
   const { data: incidents, isLoading } = useIncidents();
 
-  const recentIncidents = incidents?.slice(0, 4) || [];
   const highSeverityCount = incidents?.filter(i => i.severity === 'high').length || 0;
   const totalIncidents = incidents?.length || 0;
 
@@ -54,18 +53,41 @@ const Home: React.FC = () => {
             <p className="mb-4 text-primary-foreground/90">
               Your trusted companion for safe travel in the Windy City. View real-time safety reports from fellow tourists and locals.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/map">
-                <Button variant="secondary" className="gap-2">
-                  <MapPin className="h-4 w-4" />
-                  View Safety Map
-                </Button>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Link to="/map" state={{ fromUi: true }} className="flex-1">
+                <div className="group relative h-full overflow-hidden rounded-xl bg-background/10 p-6 transition-all hover:bg-background/20 hover:shadow-lg border border-primary-foreground/20">
+                  <div className="flex h-full items-start justify-between">
+                    <div className="flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white group-hover:text-white">Safety Map</h3>
+                        <p className="mt-1 text-sm text-primary-foreground/80">
+                          View real-time safety incidents and safe zones.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-full bg-white/20 p-2 text-white transition-colors group-hover:bg-white/30">
+                      <MapPin className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
               </Link>
-              <Link to="/report">
-                <Button variant="outline" className="gap-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  <FileText className="h-4 w-4" />
-                  Report Incident
-                </Button>
+
+              <Link to="/report" state={{ fromUi: true }} className="flex-1">
+                <div className="group relative h-full overflow-hidden rounded-xl bg-destructive/90 p-6 transition-all hover:bg-destructive hover:shadow-lg border border-destructive-foreground/20">
+                  <div className="flex h-full items-start justify-between">
+                    <div className="flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Report Incident</h3>
+                        <p className="mt-1 text-sm text-destructive-foreground/80">
+                          Submit a new report to alert others.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-full bg-white/20 p-2 text-white transition-colors group-hover:bg-white/30">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
               </Link>
             </div>
           </div>
@@ -98,7 +120,7 @@ const Home: React.FC = () => {
                 Latest safety incidents reported in Chicago
               </p>
             </div>
-            <Link to="/map">
+            <Link to="/map" state={{ fromUi: true }}>
               <Button variant="outline" size="sm">
                 View All
               </Button>
@@ -113,13 +135,15 @@ const Home: React.FC = () => {
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {recentIncidents.map(incident => (
-                <IncidentCard key={incident.id} incident={incident} />
-              ))}
+              {incidents
+                ?.sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
+                .slice(0, 4)
+                .map(incident => (
+                  <IncidentCard key={incident.id} incident={incident} />
+                ))}
             </div>
           )}
         </div>
-
         {/* Safety Tips */}
         <Card className="mt-8">
           <CardHeader>
