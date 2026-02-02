@@ -18,7 +18,7 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       // Try real API first
-      const response = await api.post<AuthResponse>('/auth/login', credentials);
+      const response = await api.post<AuthResponse>('auth/login', credentials);
       return response.data;
     } catch (error) {
       throw error;
@@ -27,7 +27,7 @@ export const authService = {
 
   async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
-      const response = await api.post<RegisterResponse>('/auth/register', credentials);
+      const response = await api.post<RegisterResponse>('auth/register', credentials);
       return response.data;
     } catch (error) {
       throw error;
@@ -36,7 +36,7 @@ export const authService = {
 
   async verifyOTP(email: string, otp: string): Promise<AuthResponse> {
     try {
-      const response = await api.post<AuthResponse>('/auth/verify-otp', { email, otp });
+      const response = await api.post<AuthResponse>('auth/verify-otp', { email, otp });
       return response.data;
     } catch (error) {
       throw error;

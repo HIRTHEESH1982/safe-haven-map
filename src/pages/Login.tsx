@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Shield, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Shield, LogIn, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,11 +58,17 @@ const Login: React.FC = () => {
         email: formData.email,
         password: formData.password,
       });
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! You have successfully signed in.",
+        variant: "success",
+      });
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Invalid email or password. Please try again.";
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

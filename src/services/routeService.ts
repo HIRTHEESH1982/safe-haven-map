@@ -18,7 +18,7 @@ export const routeService = {
     getRoute: async (start: [number, number], end: [number, number]): Promise<[number, number][]> => {
         try {
             // Call our backend proxy
-            const response = await api.get<RouteResponse>('/proxy/route', {
+            const response = await api.get<RouteResponse>('proxy/route', {
                 params: {
                     start: `${start[1]},${start[0]}`, // ORS expects lng,lat
                     end: `${end[1]},${end[0]}`

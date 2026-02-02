@@ -35,6 +35,9 @@ const Register: React.FC = () => {
     if (!formData.name.trim()) {
       toast({ title: "Name Required", description: "Please enter your full name.", variant: "destructive" });
       return false;
+    } else if (/^\d+$/.test(formData.name.trim())) {
+      toast({ title: "Invalid Name", description: "Please enter a valid username (name cannot be only numbers).", variant: "destructive" });
+      return false;
     }
 
     if (!formData.email.trim()) {
@@ -50,6 +53,15 @@ const Register: React.FC = () => {
       return false;
     } else if (formData.password.length < 6) {
       toast({ title: "Weak Password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return false;
+    } else if (!/[a-zA-Z]/.test(formData.password)) {
+      toast({ title: "Validation Error", description: "Password must contain at least one letter.", variant: "destructive" });
+      return false;
+    } else if (!/[A-Z]/.test(formData.password)) {
+      toast({ title: "Validation Error", description: "Password must contain at least one uppercase letter.", variant: "destructive" });
+      return false;
+    } else if (!/[0-9]/.test(formData.password)) {
+      toast({ title: "Validation Error", description: "Password must contain at least one number.", variant: "destructive" });
       return false;
     }
 
@@ -80,15 +92,20 @@ const Register: React.FC = () => {
         email: formData.email,
         password: formData.password,
       });
+      toast({
+        title: "Code Sent",
+        description: "A verification code has been sent to your email address.",
+        variant: "success",
+      });
       // Move to OTP step
       setStep('otp');
     } catch (error: any) {
-      // Check if message says "User already exists"
-      if (error.response?.data?.message === 'User already exists') {
-        toast({ title: "Registration Failed", description: "User already exists with this email.", variant: "destructive" });
-      } else {
-        toast({ title: "Registration Failed", description: "Please try again later.", variant: "destructive" });
-      }
+      const errorMessage = error.response?.data?.message || "Please try again later.";
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +121,11 @@ const Register: React.FC = () => {
     setIsLoading(true);
     try {
       await verifyOTP(formData.email, otp);
+      toast({
+        title: "Registration Complete",
+        description: "Sign up successful! Welcome to Safe Haven.",
+        variant: "success"
+      });
       navigate('/');
     } catch (error) {
       toast({ title: "Verification Failed", description: "Invalid or expired OTP.", variant: "destructive" });

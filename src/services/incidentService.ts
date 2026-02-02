@@ -88,7 +88,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export const incidentService = {
   async getIncidents(): Promise<Incident[]> {
     try {
-      const response = await api.get<ApiResponse<Incident[]>>('/incidents');
+      const response = await api.get<ApiResponse<Incident[]>>('incidents');
       return response.data.data;
     } catch (error) {
       console.error('Error fetching incidents:', error);
@@ -98,7 +98,7 @@ export const incidentService = {
 
   async createIncident(payload: CreateIncidentPayload): Promise<Incident> {
     try {
-      const response = await api.post<ApiResponse<Incident>>('/incidents', payload);
+      const response = await api.post<ApiResponse<Incident>>('incidents', payload);
       return response.data.data;
     } catch (error) {
       console.error('Error creating incident:', error);
@@ -108,7 +108,7 @@ export const incidentService = {
 
   async getUserIncidents(userId: string): Promise<Incident[]> {
     try {
-      const response = await api.get<ApiResponse<Incident[]>>(`/incidents/user/${userId}`);
+      const response = await api.get<ApiResponse<Incident[]>>(`incidents/user/${userId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching user incidents:', error);

@@ -57,7 +57,7 @@ router.post('/register', async (req: Request, res: Response) => {
         // Send Email
         const emailSent = await sendOTP(email, otp);
         if (!emailSent) {
-            return res.status(500).json({ message: 'Error sending email' });
+            return res.status(500).json({ message: 'Error sending verification email. Please check your connection.' });
         }
 
         res.json({ message: 'OTP sent', email });
@@ -127,13 +127,13 @@ router.post('/login', async (req: Request, res: Response) => {
         // Check if user exists
         let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'Invalid email' });
         }
 
         // Check password
         const isMatch = await bcrypt.compare(password, user.password as string);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'Invalid password' });
         }
 
         // Create token
