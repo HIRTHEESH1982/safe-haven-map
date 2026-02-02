@@ -223,39 +223,44 @@ const MapView: React.FC<MapViewProps> = ({
       )}
 
       {/* Display incidents */}
-      {incidents.map((incident) => (
-        <Marker
-          key={incident.id}
-          position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
-          icon={createIcon(incident.severity)}
-          eventHandlers={{
-            click: () => onMarkerClick?.(incident),
-          }}
-        >
-          <Popup>
-            <div className="min-w-[200px] p-2">
-              <h3 className="font-semibold text-foreground">{incident.category}</h3>
-              <div className="mt-1 flex gap-2">
-                <Badge
-                  className={
-                    incident.severity === 'high'
-                      ? 'bg-destructive text-destructive-foreground'
-                      : incident.severity === 'medium'
-                        ? 'bg-warning text-warning-foreground'
-                        : 'bg-success text-success-foreground'
-                  }
-                >
-                  {incident.severity}
-                </Badge>
+      {incidents.filter(i => i.severity === 'high').map((incident) => {
+        if (!incident.latitude || !incident.longitude) {
+          return null;
+        }
+        return (
+          <Marker
+            key={incident.id}
+            position={[incident.latitude, incident.longitude]}
+            icon={createIcon(incident.severity)}
+            eventHandlers={{
+              click: () => onMarkerClick?.(incident),
+            }}
+          >
+            <Popup>
+              <div className="min-w-[200px] p-2">
+                <h3 className="font-semibold text-foreground">{incident.category}</h3>
+                <div className="mt-1 flex gap-2">
+                  <Badge
+                    className={
+                      incident.severity === 'high'
+                        ? 'bg-destructive text-destructive-foreground'
+                        : incident.severity === 'medium'
+                          ? 'bg-warning text-warning-foreground'
+                          : 'bg-success text-success-foreground'
+                    }
+                  >
+                    {incident.severity}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{incident.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  🕐 {formatDistanceToNow(new Date(incident.reportedAt), { addSuffix: true })}
+                </p>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{incident.description}</p>
-              <p className="text-xs text-muted-foreground">
-                🕐 {formatDistanceToNow(new Date(incident.timestamp), { addSuffix: true })}
-              </p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 };

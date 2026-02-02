@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import MapView from '@/components/map/MapView';
@@ -35,12 +35,12 @@ const MapPage: React.FC = () => {
       .then(res => {
         if (isMounted.current) {
           const allowedTypes = [
-            'THEFT',
+            'HOMICIDE',
+            'CRIMINAL SEXUAL ASSAULT',
+            'ROBBERY',
+            'BATTERY',
             'ASSAULT',
-            'CRIM SEXUAL ASSAULT',
-            'SEX OFFENSE',
-            'HARASSMENT',
-            'ACCIDENT'
+            'WEAPONS VIOLATION'
           ];
           const filtered = res.data
             .filter(
@@ -147,7 +147,7 @@ const MapPage: React.FC = () => {
         const closeCrimes = crimeData.filter(crime => {
           const pt = turf.point([crime.longitude, crime.latitude]);
           return turf.booleanPointInPolygon(pt, routeBuffer);
-        });
+        }).slice(0, 50);
         const buffers = closeCrimes.map(crime =>
           turf.buffer(
             turf.point([crime.longitude, crime.latitude]),
@@ -161,7 +161,7 @@ const MapPage: React.FC = () => {
           for (let i = 1; i < buffers.length; i++) {
             try {
               unioned = turf.union(unioned, buffers[i]);
-            } catch {}
+            } catch { }
           }
         }
         let avoid = null;
@@ -221,7 +221,7 @@ const MapPage: React.FC = () => {
               </select>
               <Button type="submit" size="sm" className="gap-2">
                 <MapPin className="h-4 w-4" />
-                Calculate Route
+                Find Path
               </Button>
             </form>
           </div>
@@ -237,7 +237,7 @@ const MapPage: React.FC = () => {
             <MapView
               incidents={incidents || []}
               crimeData={crimeData}
-              onMarkerClick={() => {}}
+              onMarkerClick={() => { }}
               clickableMap={true}
               onMapClick={handleMapClick}
               startCoords={startCoords}
