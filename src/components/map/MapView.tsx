@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, GeoJSON } from 'react-leaflet';
-import 'leaflet-polylinedecorator';
 import L from 'leaflet';
+import 'leaflet-polylinedecorator';
 import axios from 'axios';
 import * as turf from '@turf/turf';
 import { CHICAGO_CENTER, Incident, IncidentSeverity } from '@/types';
@@ -226,7 +226,7 @@ const MapView: React.FC<MapViewProps> = ({
       {incidents.map((incident) => (
         <Marker
           key={incident.id}
-          position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
+          position={[incident.latitude, incident.longitude]}
           icon={createIcon(incident.severity)}
           eventHandlers={{
             click: () => onMarkerClick?.(incident),
@@ -250,7 +250,7 @@ const MapView: React.FC<MapViewProps> = ({
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{incident.description}</p>
               <p className="text-xs text-muted-foreground">
-                🕐 {formatDistanceToNow(new Date(incident.timestamp), { addSuffix: true })}
+                🕐 {formatDistanceToNow(new Date(incident.reportedAt), { addSuffix: true })}
               </p>
             </div>
           </Popup>

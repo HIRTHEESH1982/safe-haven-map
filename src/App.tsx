@@ -38,9 +38,7 @@ const App = () => (
               path="/map"
               element={
                 <PrivateRoute>
-                  <UiOnlyRoute>
-                    <MapPage />
-                  </UiOnlyRoute>
+                  <MapPage />
                 </PrivateRoute>
               }
             />
@@ -48,9 +46,7 @@ const App = () => (
               path="/report"
               element={
                 <PrivateRoute>
-                  <UiOnlyRoute>
-                    <Report />
-                  </UiOnlyRoute>
+                  <Report />
                 </PrivateRoute>
               }
             />
