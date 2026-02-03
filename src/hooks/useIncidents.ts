@@ -34,3 +34,11 @@ export const useUserIncidents = (userId: string | undefined) => {
     enabled: !!userId,
   });
 };
+
+export const useUserArchivedIncidents = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['incidents', 'archived', userId],
+    queryFn: () => incidentService.getUserArchived(),
+    enabled: !!userId,
+  });
+};

@@ -75,8 +75,8 @@ const ReportModeration = () => {
     });
 
     const moderateMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string; status: 'verified' | 'rejected' }) =>
-            adminService.moderateIncident(id, status),
+        mutationFn: ({ id, status, reason }: { id: string; status: 'verified' | 'rejected'; reason?: string }) =>
+            adminService.moderateIncident(id, status, reason),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['adminIncidents'] });
             toast({ title: 'Report Moderated', description: 'The report status has been updated.' });
@@ -90,6 +90,7 @@ const ReportModeration = () => {
             </div>
 
             <Tabs defaultValue="pending" className="w-full" onValueChange={setActiveTab}>
+                {/* TabsList and Triggers skipped/unchanged */}
                 <TabsList>
                     <TabsTrigger value="pending">Pending Review</TabsTrigger>
                     <TabsTrigger value="verified">Verified</TabsTrigger>
@@ -106,7 +107,7 @@ const ReportModeration = () => {
                                 key={incident.id}
                                 incident={incident}
                                 onVerify={(id) => moderateMutation.mutate({ id, status: 'verified' })}
-                                onReject={(id) => moderateMutation.mutate({ id, status: 'rejected' })}
+                                onReject={(id) => moderateMutation.mutate({ id, status: 'rejected', reason: 'Spam' })}
                             />
                         ))
                     ) : (

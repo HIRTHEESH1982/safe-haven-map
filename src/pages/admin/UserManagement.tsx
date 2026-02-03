@@ -93,7 +93,7 @@ const UserManagement = () => {
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>
-                                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                        <Badge variant={user.role === 'admin' ? 'default' : user.role === 'owner' ? 'outline' : 'secondary'} className={user.role === 'owner' ? 'border-amber-500 text-amber-500' : ''}>
                                             {user.role}
                                         </Badge>
                                     </TableCell>
@@ -103,39 +103,50 @@ const UserManagement = () => {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right flex justify-end gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => updateRoleMutation.mutate({
-                                                id: user.id,
-                                                role: user.role === 'admin' ? 'user' : 'admin'
-                                            })}
-                                        >
-                                            {user.role === 'user' ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => updateStatusMutation.mutate({
-                                                id: user.id,
-                                                status: user.status === 'active' ? 'suspended' : 'active'
-                                            })}
-                                            className={user.status === 'active' ? 'text-destructive' : 'text-green-600'}
-                                        >
-                                            {user.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                                                    deleteUserMutation.mutate(user.id);
-                                                }
-                                            }}
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {user.role === 'owner' ? (
+                                            <Badge variant="outline" className="border-amber-500 text-amber-500">
+                                                Owner
+                                            </Badge>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    title={user.role === 'user' ? "Promote to Admin" : "Demote to User"}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => updateRoleMutation.mutate({
+                                                        id: user.id,
+                                                        role: user.role === 'admin' ? 'user' : 'admin'
+                                                    })}
+                                                >
+                                                    {user.role === 'user' ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
+                                                </Button>
+                                                <Button
+                                                    title={user.status === 'active' ? "Suspend User" : "Activate User"}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => updateStatusMutation.mutate({
+                                                        id: user.id,
+                                                        status: user.status === 'active' ? 'suspended' : 'active'
+                                                    })}
+                                                    className={user.status === 'active' ? 'text-destructive' : 'text-green-600'}
+                                                >
+                                                    {user.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                                                </Button>
+                                                <Button
+                                                    title="Delete User"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                                                            deleteUserMutation.mutate(user.id);
+                                                        }
+                                                    }}
+                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

@@ -7,39 +7,40 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Layout from '@/components/layout/Layout';
 import IncidentCard from '@/components/incidents/IncidentCard';
 import { useIncidents } from '@/hooks/useIncidents';
+import { useStats } from '@/hooks/useStats';
 
 const Home: React.FC = () => {
-  const { data: incidents, isLoading } = useIncidents();
-
-  const highSeverityCount = incidents?.filter(i => i.severity === 'high').length || 0;
-  const totalIncidents = incidents?.length || 0;
+  const { data: incidents, isLoading: incidentsLoading } = useIncidents();
+  const { data: statsData, isLoading: statsLoading } = useStats();
 
   const stats = [
     {
       title: 'Total Reports',
-      value: totalIncidents,
+      value: statsData?.totalIncidents || 0,
       icon: FileText,
       description: 'Active incident reports',
     },
     {
       title: 'High Priority',
-      value: highSeverityCount,
+      value: statsData?.highPriority || 0,
       icon: AlertTriangle,
       description: 'Require caution',
     },
     {
-      title: 'Safe Zones',
-      value: '12+',
+      title: 'Verified Reports',
+      value: statsData?.verifiedReports || 0,
       icon: Shield,
-      description: 'Verified safe areas',
+      description: 'Verified community reports',
     },
     {
       title: 'Community',
-      value: '2.5K+',
+      value: statsData?.totalUsers || 0,
       icon: Users,
       description: 'Active contributors',
     },
   ];
+
+  const isLoading = incidentsLoading || statsLoading;
 
   return (
     <Layout>
