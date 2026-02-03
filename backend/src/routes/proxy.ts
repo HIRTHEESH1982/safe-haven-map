@@ -1,7 +1,10 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
+import { authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.get('/route', async (req: Request, res: Response) => {
     try {

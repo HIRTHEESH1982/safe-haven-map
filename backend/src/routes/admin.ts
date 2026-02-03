@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import User from '../models/User';
 import Incident from '../models/Incident';
+import ArchivedIncident from '../models/ArchivedIncident';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/admin';
 
@@ -150,6 +151,33 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
 router.get('/incidents', async (req: Request, res: Response) => {
     try {
         const { status } = req.query;
+
+        if (status === 'rejected') {
+            const archivedIncidents = await ArchivedIncident.find()
+                .populate('reportedBy', 'name email')
+                .populate('deletedBy', 'name email')
+                .sort({ deletedAt: -1 })
+                .limit(100);
+
+            return res.json(archivedIncidents.map(inc => ({
+                id: inc.originalId, // Return original ID to maintain consistency
+                title: inc.title,
+                description: inc.description,
+                category: inc.category,
+                severity: inc.severity,
+                latitude: inc.latitude,
+                longitude: inc.longitude,
+                location: inc.location,
+                reportedBy: inc.reportedBy,
+                reportedAt: inc.originalCreatedAt,
+                status: inc.status,
+                moderationReason: inc.moderationReason,
+                moderatedBy: inc.moderatedBy,
+                deletedBy: inc.deletedBy,
+                deletedAt: inc.deletedAt
+            })));
+        }
+
         const query = status ? { status } : {};
 
         const incidents = await Incident.find(query)
@@ -158,7 +186,7 @@ router.get('/incidents', async (req: Request, res: Response) => {
             .sort({ createdAt: -1 })
             .limit(100);
 
-        console.log('Admin Incidents (sample):', incidents[0] ? JSON.stringify(incidents[0].reportedBy, null, 2) : 'No incidents');
+        // console.log('Admin Incidents (sample):', incidents[0] ? JSON.stringify(incidents[0].reportedBy, null, 2) : 'No incidents');
 
         res.json(incidents.map(inc => ({
             id: inc._id,
@@ -176,6 +204,7 @@ router.get('/incidents', async (req: Request, res: Response) => {
             moderatedBy: inc.moderatedBy
         })));
     } catch (error) {
+        console.error('Fetch Incidents Error:', error);
         res.status(500).json({ message: 'Server error fetching incidents' });
     }
 });
@@ -190,6 +219,37 @@ router.patch('/incidents/:id/status', async (req: AuthRequest, res: Response) =>
             return res.status(400).json({ message: 'Invalid status' });
         }
 
+        // If Rejecting, Move to Archive
+        if (status === 'rejected') {
+            const incident = await Incident.findById(req.params.id);
+            if (!incident) return res.status(404).json({ message: 'Incident not found' });
+
+            const archivedIncident = new ArchivedIncident({
+                originalId: incident._id,
+                title: incident.title,
+                description: incident.description,
+                category: incident.category,
+                severity: incident.severity,
+                latitude: incident.latitude,
+                longitude: incident.longitude,
+                location: incident.location,
+                reportedBy: incident.reportedBy,
+                reportedByEmail: incident.reportedByEmail,
+                status: 'rejected',
+                moderatedBy: req.user?.id,
+                moderationReason: reason,
+                originalCreatedAt: incident.createdAt,
+                deletedBy: req.user?.id,
+                deletedAt: new Date()
+            });
+
+            await archivedIncident.save();
+            await incident.deleteOne();
+
+            return res.json({ message: 'Incident rejected and archived', id: incident._id });
+        }
+
+        // Otherwise (Verify/Pending), just update
         const incident = await Incident.findByIdAndUpdate(
             req.params.id,
             {
@@ -204,19 +264,46 @@ router.patch('/incidents/:id/status', async (req: AuthRequest, res: Response) =>
 
         res.json(incident);
     } catch (error) {
+        console.error('Moderation Error:', error);
         res.status(500).json({ message: 'Server error moderating incident' });
     }
 });
 
 // DELETE /api/admin/incidents/:id
-// Delete an incident (Rejecting/Removing)
-router.delete('/incidents/:id', async (req: Request, res: Response) => {
+// Delete an incident (Rejecting/Removing) -> Move to Archive
+router.delete('/incidents/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const incident = await Incident.findByIdAndDelete(id);
+        const incident = await Incident.findById(id);
+
         if (!incident) return res.status(404).json({ message: 'Incident not found' });
-        res.json({ message: 'Incident deleted' });
+
+        // Archive the incident
+        const archivedIncident = new ArchivedIncident({
+            originalId: incident._id,
+            title: incident.title,
+            description: incident.description,
+            category: incident.category,
+            severity: incident.severity,
+            latitude: incident.latitude,
+            longitude: incident.longitude,
+            location: incident.location,
+            reportedBy: incident.reportedBy,
+            reportedByEmail: incident.reportedByEmail,
+            status: incident.status,
+            moderatedBy: incident.moderatedBy,
+            moderationReason: incident.moderationReason,
+            originalCreatedAt: incident.createdAt,
+            deletedBy: req.user?.id,
+            deletedAt: new Date()
+        });
+
+        await archivedIncident.save();
+        await incident.deleteOne(); // Use deleteOne() on the document to ensure hooks run if any (or just standard delete)
+
+        res.json({ message: 'Incident archived and deleted successfully' });
     } catch (error) {
+        console.error('Delete/Archive Error:', error);
         res.status(500).json({ message: 'Server error deleting incident' });
     }
 });

@@ -15,6 +15,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-1',
     reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     verified: true,
+    status: 'verified',
   },
   {
     id: '2',
@@ -28,6 +29,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-2',
     reportedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
     verified: true,
+    status: 'verified',
   },
   {
     id: '3',
@@ -41,6 +43,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-3',
     reportedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
     verified: true,
+    status: 'verified',
   },
   {
     id: '4',
@@ -54,6 +57,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-4',
     reportedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     verified: false,
+    status: 'pending',
   },
   {
     id: '5',
@@ -67,6 +71,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-5',
     reportedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
     verified: true,
+    status: 'verified',
   },
   {
     id: '6',
@@ -80,6 +85,7 @@ const MOCK_INCIDENTS: Incident[] = [
     reportedBy: 'user-6',
     reportedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
     verified: false,
+    status: 'pending',
   },
 ];
 
@@ -112,6 +118,16 @@ export const incidentService = {
       return response.data.data;
     } catch (error) {
       console.error('Error fetching user incidents:', error);
+      return [];
+    }
+  },
+
+  async getUserArchived(): Promise<any[]> {
+    try {
+      const response = await api.get<ApiResponse<any[]>>('/incidents/archived');
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching archived incidents:', error);
       return [];
     }
   },
