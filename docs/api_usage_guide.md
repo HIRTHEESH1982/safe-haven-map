@@ -5,7 +5,7 @@ This document explains **where** and **how** APIs are used in the Safe Haven Map
 ## 1. Internal Backend API (Our Custom Server)
 We built our own Node.js/Express backend to handle authentication, user data, and incident reports.
 
-*   **Base URL:** `/api` (Proxied in Vite to `http://localhost:5000/api`)
+*   **Base URL:** `/api` (Proxied in Vite to `https://safe-route-depp.onrender.com/api`)
 *   **Key Files:**
     *   **Frontend:** `src/services/api.ts` (Axios instance with interceptors for JWT)
     *   **Backend:** `backend/src/server.ts`, `backend/src/routes/`
