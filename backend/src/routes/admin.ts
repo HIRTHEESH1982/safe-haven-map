@@ -31,13 +31,25 @@ router.get('/stats', async (req: Request, res: Response) => {
         ]);
 
         // Mock data for charts (to be replaced with aggregation later)
-        const reportsPerDay = [
-            { date: '2024-02-01', count: 12 },
-            { date: '2024-02-02', count: 19 },
-            { date: '2024-02-03', count: 15 },
-            { date: '2024-02-04', count: 22 },
-            { date: '2024-02-05', count: 28 },
-        ];
+        // Aggregate actual reports per day (Last 5 days)
+        const fiveDaysAgo = new Date();
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+        const reportsAggregation = await Incident.aggregate([
+            { $match: { createdAt: { $gte: fiveDaysAgo } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const reportsPerDay = reportsAggregation.map(item => ({
+            date: item._id,
+            count: item.count
+        }));
 
         const categoryDistribution = await Incident.aggregate([
             { $group: { _id: "$category", count: { $sum: 1 } } }
@@ -86,12 +98,26 @@ router.get('/users', async (req: Request, res: Response) => {
 router.patch('/users/:id', async (req: Request, res: Response) => {
     try {
         const { role, status } = req.body;
+
+        // Find user first to check current role
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) return res.status(404).json({ message: 'User not found' });
+
+        // PROTECT OWNER: Cannot modify an owner account
+        if (targetUser.role === 'owner') {
+            return res.status(403).json({ message: 'Action forbidden: Cannot modify an Owner account.' });
+        }
+
+        // Prevent escalation: Cannot set role to owner via API
+        if (role === 'owner') {
+            return res.status(403).json({ message: 'Action forbidden: Cannot assign Owner role.' });
+        }
+
         const updateData: any = {};
         if (role) updateData.role = role;
         if (status) updateData.status = status;
 
         const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true }).select('-password');
-        if (!user) return res.status(404).json({ message: 'User not found' });
 
         res.json(user);
     } catch (error) {
